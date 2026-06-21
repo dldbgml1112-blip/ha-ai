@@ -2668,7 +2668,7 @@ function showPurifierAIError(message){
   $('#purifierIntent').textContent=
     'Supabase의 analyze-input Edge Function을 최신 코드로 다시 배포해 주세요.';
   $('#purifiedShort').textContent='정화 결과를 불러오지 못했습니다.';
-  $('#purifiedPolite').textContent='OPENAI_API_KEY와 함수 배포 상태를 확인해 주세요.';
+  $('#purifiedPolite').textContent='GEMINI_API_KEY와 함수 배포 상태를 확인해 주세요.';
   $('#purifiedFirm').textContent='기존 번역 코드는 제거되었습니다.';
   $('#purifiedBoundary').textContent='최신 Edge Function이 배포되어야 회사어 정화기가 작동합니다.';
   $('#purifierFill').style.width='0%';
@@ -2828,7 +2828,7 @@ function showAIConnectionError(message){
   $('#officeLabel').textContent='현재 상태';
   $('#prescriptionLabel').textContent='다음 행동';
   $('#inner').textContent='Supabase Edge Function 이름이 analyze-input인지 확인하세요.';
-  $('#office').textContent='OPENAI_API_KEY가 Supabase Secrets에 없거나 함수가 배포되지 않았을 수 있습니다.';
+  $('#office').textContent='GEMINI_API_KEY가 Supabase Secrets에 없거나 함수가 배포되지 않았을 수 있습니다.';
   $('#prescription').textContent='제공된 README 순서대로 함수 배포와 비밀키 설정을 완료한 뒤 다시 시도하세요.';
   [0,0,0,0].forEach((score,index)=>{
     $('#f'+(index+1)).style.width=score+'%';
@@ -3317,7 +3317,7 @@ async function analyzeVoiceWithAI(){
     showAIConnectionError(error.message);
     $('#recordTitle').textContent='AI 판정 실패';
     $('#recordDesc').textContent=
-      'Edge Function과 OPENAI_API_KEY 설정을 확인해 주세요.';
+      'Edge Function과 GEMINI_API_KEY 설정을 확인해 주세요.';
     toast('AI 음성 판정에 실패했습니다.');
   }finally{
     button.disabled=false;
