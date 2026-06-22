@@ -3870,6 +3870,10 @@ let pantryKnownCommentIds=new Set();
 let pantryCommentsInitialized=false;
 let pantryFeedInitialized=false;
 const pantryCommentDrafts=new Map();
+let pantryCommentTyping=false;
+let pantryCommentComposing=false;
+let pantryRenderPending=false;
+let pantryCommentSubmitting=false;
 let unreadPantryComments=0;
 let commentAlertTimer=null;
 
@@ -4009,7 +4013,7 @@ async function handleRealtimeCommentInsert(comment){
   pantryKnownCommentIds.add(comment.id);
   pantryComments.push(comment);
   pantryComments.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-  renderPantry();
+  requestPantryRender();
 
   await notifyIncomingPantryComment(comment);
 }
@@ -4069,6 +4073,39 @@ async function subscribePantryRealtime({force=false}={}){
         },1800);
       }
     });
+}
+
+function isPantryCommentEditing(){
+  const active=document.activeElement;
+
+  return (
+    pantryCommentTyping||
+    pantryCommentComposing||
+    (
+      active instanceof HTMLInputElement &&
+      active.classList.contains('comment-input')
+    )
+  );
+}
+
+function requestPantryRender({force=false}={}){
+  if(!force&&isPantryCommentEditing()){
+    pantryRenderPending=true;
+    return;
+  }
+
+  pantryRenderPending=false;
+  renderPantry();
+}
+
+function flushPendingPantryRender(){
+  if(
+    pantryRenderPending&&
+    !isPantryCommentEditing()&&
+    !pantryCommentSubmitting
+  ){
+    requestPantryRender({force:true});
+  }
 }
 
 function capturePantryCommentState(){
@@ -4144,27 +4181,32 @@ function pantryDataSignature(
   reactions,
   comments
 ){
+  const sortRows=rows=>
+    rows
+      .map(row=>row.map(value=>String(value??'')))
+      .sort((a,b)=>a.join('|').localeCompare(b.join('|')));
+
   return JSON.stringify({
-    posts:posts.map(post=>[
+    posts:sortRows(posts.map(post=>[
       post.id,
       post.user_id,
       post.content,
       post.created_at
-    ]),
-    reactions:reactions.map(reaction=>[
+    ])),
+    reactions:sortRows(reactions.map(reaction=>[
       reaction.id,
       reaction.post_id,
       reaction.user_id,
       reaction.reaction_type,
       reaction.created_at
-    ]),
-    comments:comments.map(comment=>[
+    ])),
+    comments:sortRows(comments.map(comment=>[
       comment.id,
       comment.post_id,
       comment.user_id,
       comment.content,
       comment.created_at
-    ])
+    ]))
   });
 }
 
@@ -4603,7 +4645,7 @@ async function loadPantry({silent=false}={}){
     pantryComments=nextComments;
 
     if(shouldRender){
-      renderPantry();
+      requestPantryRender();
     }else{
       renderMeasuredStats();
     }
@@ -4708,11 +4750,14 @@ $('#feed').addEventListener('click',async event=>{
 
   const commentSubmit=event.target.closest('.comment-submit');
   if(commentSubmit){
+    pantryCommentSubmitting=true;
+
     const form=commentSubmit.closest('.comment-form');
     const input=form?.querySelector('.comment-input');
     const content=input?.value.trim()||'';
 
     if(!content){
+      pantryCommentSubmitting=false;
       toast('댓글을 입력해 주세요.');
       input?.focus();
       return;
@@ -4740,16 +4785,24 @@ $('#feed').addEventListener('click',async event=>{
 
       if(currentInput){
         currentInput.value='';
+        currentInput.blur();
       }
+
+      pantryCommentTyping=false;
+      pantryCommentComposing=false;
+      pantryRenderPending=false;
 
       toast(`${nicknameForUser(currentPantryUserId)}으로 댓글을 남겼습니다.`);
       await loadPantry({silent:true});
+      requestPantryRender({force:true});
     }catch(error){
       console.error(error);
       toast('댓글 등록에 실패했습니다.');
     }finally{
+      pantryCommentSubmitting=false;
       commentSubmit.disabled=false;
       commentSubmit.textContent='댓글';
+      flushPendingPantryRender();
     }
     return;
   }
@@ -4797,9 +4850,54 @@ $('#feed').addEventListener('click',async event=>{
   }
 });
 
+$('#feed').addEventListener('focusin',event=>{
+  if(!event.target.closest('.comment-input')) return;
+  pantryCommentTyping=true;
+});
+
+$('#feed').addEventListener('focusout',event=>{
+  if(!event.target.closest('.comment-input')) return;
+
+  setTimeout(()=>{
+    const active=document.activeElement;
+    const stillEditing=
+      active instanceof HTMLInputElement &&
+      active.classList.contains('comment-input');
+
+    if(!stillEditing&&!pantryCommentComposing){
+      pantryCommentTyping=false;
+      flushPendingPantryRender();
+    }
+  },250);
+});
+
+$('#feed').addEventListener('compositionstart',event=>{
+  if(!event.target.closest('.comment-input')) return;
+  pantryCommentComposing=true;
+  pantryCommentTyping=true;
+});
+
+$('#feed').addEventListener('compositionend',event=>{
+  const input=event.target.closest('.comment-input');
+  if(!input) return;
+
+  pantryCommentComposing=false;
+
+  const postId=input.closest('.post')?.dataset.postId;
+  if(postId){
+    if(input.value){
+      pantryCommentDrafts.set(postId,input.value);
+    }else{
+      pantryCommentDrafts.delete(postId);
+    }
+  }
+});
+
 $('#feed').addEventListener('input',event=>{
   const input=event.target.closest('.comment-input');
   if(!input) return;
+
+  pantryCommentTyping=true;
 
   const postId=input.closest('.post')?.dataset.postId;
   if(!postId) return;
@@ -4877,7 +4975,11 @@ loadPantry();
 subscribePantryRealtime().catch(error=>console.error('실시간 댓글 연결 실패:',error));
 loadHourlySighs();
 setInterval(()=>{
-  if(document.visibilityState==='visible'){
+  if(
+    document.visibilityState==='visible'&&
+    !isPantryCommentEditing()&&
+    !pantryCommentSubmitting
+  ){
     loadPantry({silent:true});
   }
 },4000);
