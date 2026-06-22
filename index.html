@@ -3541,8 +3541,12 @@ let pantryPosts=[];
 let pantryReactions=[];
 let pantryComments=[];
 let currentPantryUserId=null;
+let pantrySessionPromise=null;
 let pantryLoading=false;
 let pantryRealtimeChannel=null;
+let pantryRealtimeStatus='idle';
+let pantryKnownCommentIds=new Set();
+let pantryCommentsInitialized=false;
 let unreadPantryComments=0;
 let commentAlertTimer=null;
 
@@ -3650,27 +3654,22 @@ function showCommentAlert(comment,post){
   commentAlertTimer=setTimeout(hideCommentAlert,6500);
 }
 
-async function handleRealtimeCommentInsert(comment){
+async function notifyIncomingPantryComment(comment){
   if(!comment?.id) return;
-  if(!pantryComments.some(item=>item.id===comment.id)){
-    pantryComments.push(comment);
-    pantryComments.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-    renderPantry();
-  }
-
   if(!currentPantryUserId||comment.user_id===currentPantryUserId) return;
 
   let post=pantryPosts.find(item=>item.id===comment.post_id);
+
   if(!post){
     const {data,error}=await supabaseClient
       .from('pantry_posts')
       .select('id,user_id,nickname,content,created_at')
       .eq('id',comment.post_id)
       .maybeSingle();
+
     if(!error&&data){
       post=data;
       pantryPosts.unshift(data);
-      renderPantry();
     }
   }
 
@@ -3681,12 +3680,37 @@ async function handleRealtimeCommentInsert(comment){
   }
 }
 
-async function subscribePantryRealtime(){
+async function handleRealtimeCommentInsert(comment){
+  if(!comment?.id||pantryKnownCommentIds.has(comment.id)) return;
+
+  pantryKnownCommentIds.add(comment.id);
+  pantryComments.push(comment);
+  pantryComments.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  renderPantry();
+
+  await notifyIncomingPantryComment(comment);
+}
+
+async function subscribePantryRealtime({force=false}={}){
   await ensurePantrySession();
+
+  const {data:{session}}=await supabaseClient.auth.getSession();
+
+  if(session?.access_token){
+    supabaseClient.realtime.setAuth(session.access_token);
+  }
+
+  if(force&&pantryRealtimeChannel){
+    await supabaseClient.removeChannel(pantryRealtimeChannel);
+    pantryRealtimeChannel=null;
+  }
+
   if(pantryRealtimeChannel) return;
 
+  pantryRealtimeStatus='connecting';
+
   pantryRealtimeChannel=supabaseClient
-    .channel(`pantry-comments-${currentPantryUserId}`)
+    .channel(`pantry-comments-${currentPantryUserId}-${Date.now()}`)
     .on(
       'postgres_changes',
       {event:'INSERT',schema:'public',table:'pantry_comments'},
@@ -3697,24 +3721,86 @@ async function subscribePantryRealtime(){
       {event:'DELETE',schema:'public',table:'pantry_comments'},
       ()=>loadPantry({silent:true})
     )
-    .subscribe();
+    .on(
+      'postgres_changes',
+      {event:'DELETE',schema:'public',table:'pantry_posts'},
+      ()=>loadPantry({silent:true})
+    )
+    .subscribe((status,error)=>{
+      pantryRealtimeStatus=status;
+
+      if(error){
+        console.error('실시간 댓글 연결 오류:',error);
+      }
+
+      if(
+        status==='CHANNEL_ERROR'||
+        status==='TIMED_OUT'||
+        status==='CLOSED'
+      ){
+        setTimeout(()=>{
+          subscribePantryRealtime({force:true})
+            .catch(reconnectError=>
+              console.error('실시간 댓글 재연결 실패:',reconnectError)
+            );
+        },1800);
+      }
+    });
 }
 
 async function ensurePantrySession(){
-  const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
-  if(sessionError) throw sessionError;
-
-  if(sessionData.session){
-    currentPantryUserId=sessionData.session.user.id;
+  if(currentPantryUserId){
     updateMyPantryNickname();
     return currentPantryUserId;
   }
 
-  const {data,error}=await supabaseClient.auth.signInAnonymously();
-  if(error) throw error;
-  currentPantryUserId=data.user.id;
-  updateMyPantryNickname();
-  return currentPantryUserId;
+  if(pantrySessionPromise){
+    return pantrySessionPromise;
+  }
+
+  pantrySessionPromise=(async()=>{
+    const {data:sessionData,error:sessionError}=
+      await supabaseClient.auth.getSession();
+
+    if(sessionError) throw sessionError;
+
+    if(sessionData.session?.user?.id){
+      currentPantryUserId=sessionData.session.user.id;
+
+      if(sessionData.session.access_token){
+        supabaseClient.realtime.setAuth(
+          sessionData.session.access_token
+        );
+      }
+
+      updateMyPantryNickname();
+      return currentPantryUserId;
+    }
+
+    const {data,error}=await supabaseClient.auth.signInAnonymously();
+
+    if(error) throw error;
+    if(!data.user?.id){
+      throw new Error('익명 사용자 정보를 만들지 못했습니다.');
+    }
+
+    currentPantryUserId=data.user.id;
+
+    if(data.session?.access_token){
+      supabaseClient.realtime.setAuth(
+        data.session.access_token
+      );
+    }
+
+    updateMyPantryNickname();
+    return currentPantryUserId;
+  })();
+
+  try{
+    return await pantrySessionPromise;
+  }finally{
+    pantrySessionPromise=null;
+  }
 }
 
 function renderPantry(){
@@ -4050,9 +4136,33 @@ async function loadPantry({silent=false}={}){
     if(reactionsResult.error) throw reactionsResult.error;
     if(commentsResult.error) throw commentsResult.error;
 
-    pantryPosts=postsResult.data||[];
-    pantryReactions=reactionsResult.data||[];
-    pantryComments=commentsResult.data||[];
+    const nextPosts=postsResult.data||[];
+    const nextReactions=reactionsResult.data||[];
+    const nextComments=commentsResult.data||[];
+
+    pantryPosts=nextPosts;
+    pantryReactions=nextReactions;
+
+    if(!pantryCommentsInitialized){
+      nextComments.forEach(comment=>
+        pantryKnownCommentIds.add(comment.id)
+      );
+      pantryCommentsInitialized=true;
+    }else{
+      const incomingComments=nextComments.filter(
+        comment=>!pantryKnownCommentIds.has(comment.id)
+      );
+
+      incomingComments.forEach(comment=>
+        pantryKnownCommentIds.add(comment.id)
+      );
+
+      for(const comment of incomingComments){
+        await notifyIncomingPantryComment(comment);
+      }
+    }
+
+    pantryComments=nextComments;
     renderPantry();
   }catch(error){
     showPantrySetupError(error);
@@ -4082,8 +4192,30 @@ $('#feed').addEventListener('click',async event=>{
         .eq('user_id',currentPantryUserId);
 
       if(error) throw error;
+
+      const removedCommentIds=pantryComments
+        .filter(comment=>comment.post_id===postId)
+        .map(comment=>comment.id);
+
+      pantryPosts=pantryPosts.filter(post=>post.id!==postId);
+      pantryReactions=pantryReactions.filter(
+        reaction=>reaction.post_id!==postId
+      );
+      pantryComments=pantryComments.filter(
+        comment=>comment.post_id!==postId
+      );
+
+      removedCommentIds.forEach(commentId=>
+        pantryKnownCommentIds.delete(commentId)
+      );
+
+      renderPantry();
       toast('내 글을 삭제했습니다.');
-      await loadPantry({silent:true});
+
+      setTimeout(
+        ()=>loadPantry({silent:true}),
+        300
+      );
     }catch(error){
       console.error(error);
       toast('글 삭제에 실패했습니다.');
@@ -4108,8 +4240,19 @@ $('#feed').addEventListener('click',async event=>{
         .eq('user_id',currentPantryUserId);
 
       if(error) throw error;
+
+      pantryComments=pantryComments.filter(
+        comment=>comment.id!==commentId
+      );
+      pantryKnownCommentIds.delete(commentId);
+
+      renderPantry();
       toast('댓글을 삭제했습니다.');
-      await loadPantry({silent:true});
+
+      setTimeout(
+        ()=>loadPantry({silent:true}),
+        300
+      );
     }catch(error){
       console.error(error);
       toast('댓글 삭제에 실패했습니다.');
@@ -4268,9 +4411,27 @@ loadHourlySighs();
 setInterval(()=>{
   if(document.visibilityState==='visible'){
     loadPantry({silent:true});
+  }
+},4000);
+
+setInterval(()=>{
+  if(document.visibilityState==='visible'){
     loadHourlySighs();
   }
 },15000);
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState!=='visible') return;
+
+  loadPantry({silent:true});
+
+  if(pantryRealtimeStatus!=='SUBSCRIBED'){
+    subscribePantryRealtime({force:true})
+      .catch(error=>
+        console.error('실시간 댓글 재연결 실패:',error)
+      );
+  }
+});
 
 $('#closeBtn').onclick=()=>{
   stats={total:0,text:0,voice:0,swear:0,sumResignation:0,sumAnger:0,types:{},records:[]};
