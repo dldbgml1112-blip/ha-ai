@@ -2400,21 +2400,21 @@ body.manager-mode-open{overflow:hidden}
 <section class="view" id="stats">
   <div class="section-head">
     <div>
-      <span class="eyebrow">MY SIGH RECORDS</span>
-      <h2 style="margin:12px 0 0">내 한숨 기록</h2>
-      <p>이 기기에서 직접 분석한 기록만 표시합니다. 월간·요일 통계는 데이터가 없어서 제거했습니다.</p>
+      <span class="eyebrow">MY SURVIVAL RECORDS</span>
+      <h2 style="margin:12px 0 0">내 생존 기록</h2>
+      <p>한숨 원문과 탕비실 글 내용은 표시하지 않고, 분석 결과와 본인 활동 수치만 집계합니다.</p>
     </div>
   </div>
 
   <div class="statement empty-state" id="statsEmpty">
     <div class="empty-icon">📭</div>
     <h3>아직 쌓인 기록이 없습니다</h3>
-    <p>한숨 문장이나 직접 한숨을 분석하면 그때부터 실제 결과만 이곳에 쌓입니다.</p>
+    <p>한숨을 분석하거나 탕비실에서 글·댓글을 남기면 내용 없이 활동 수치만 이곳에 표시됩니다.</p>
     <button class="btn dark" data-go-analysis>첫 한숨 분석하기</button>
   </div>
 
   <div id="statsContent" style="display:none">
-    <div class="grid g4">
+    <div class="grid g4" id="sighRecordMetrics">
       <div class="card metric">
         <div class="label">전체 분석</div>
         <div class="value" id="recordTotal">0회</div>
@@ -2437,7 +2437,7 @@ body.manager-mode-open{overflow:hidden}
       </div>
     </div>
 
-    <div class="grid g2" style="margin-top:16px">
+    <div class="grid g2" id="sighRecordDetails" style="margin-top:16px">
       <div class="card">
         <div class="section-head" style="margin:0 0 14px">
           <div>
@@ -2458,6 +2458,36 @@ body.manager-mode-open{overflow:hidden}
         <div id="recentRecords"></div>
       </div>
     </div>
+
+    <div class="section-head" style="margin:28px 0 14px">
+      <div>
+        <h2>오늘의 탕비실 활동</h2>
+        <p>게시글과 댓글의 실제 내용은 제외하고 현재 익명 계정의 수치만 표시합니다.</p>
+      </div>
+    </div>
+
+    <div class="grid g4" id="pantryRecordMetrics">
+      <div class="card metric">
+        <div class="label">내가 쓴 글</div>
+        <div class="value" id="recordPantryPosts">0건</div>
+        <div class="note">오늘 남아 있는 글 기준</div>
+      </div>
+      <div class="card metric">
+        <div class="label">내가 쓴 댓글</div>
+        <div class="value" id="recordPantryComments">0건</div>
+        <div class="note">오늘 남아 있는 댓글 기준</div>
+      </div>
+      <div class="card metric">
+        <div class="label">내 글에 받은 댓글</div>
+        <div class="value" id="recordReceivedComments">0건</div>
+        <div class="note">본인 댓글은 제외</div>
+      </div>
+      <div class="card metric">
+        <div class="label">내 글에 받은 공감</div>
+        <div class="value" id="recordReceivedReactions">0회</div>
+        <div class="note">본인 공감은 제외</div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -2465,23 +2495,23 @@ body.manager-mode-open{overflow:hidden}
   <div class="section-head">
     <div>
       <span class="eyebrow">END OF DAY SETTLEMENT</span>
-      <h2 style="margin:12px 0 0">오늘의 한숨 퇴근 정산</h2>
-      <p>직접 분석한 기록만 모아 오늘의 한숨을 마감합니다.</p>
+      <h2 style="margin:12px 0 0">오늘의 퇴근 정산</h2>
+      <p>한숨 분석과 탕비실 활동을 내용 노출 없이 수치로만 마감합니다.</p>
     </div>
   </div>
 
   <div class="statement empty-state" id="closingEmpty">
     <div class="empty-icon">🫥</div>
-    <h3>아직 정산할 한숨이 없습니다</h3>
-    <p>문장이나 직접 한숨을 한 번 이상 분석하면 실제 측정된 내용만 모아 정산서를 만듭니다.</p>
+    <h3>아직 정산할 활동이 없습니다</h3>
+    <p>한숨을 분석하거나 탕비실에서 활동하면 입력 내용 없이 집계 수치만 정산서에 표시됩니다.</p>
     <button class="btn dark" data-go-analysis>한숨 먼저 분석하기</button>
   </div>
 
   <div class="statement" id="closingSummary" style="display:none">
     <div class="statement-head">
       <div>
-        <h2 style="margin:0">오늘의 한숨 정산서</h2>
-        <small style="color:var(--muted)">현재 기기에서 직접 분석한 기록만 반영</small>
+        <h2 style="margin:0">오늘의 생존 정산서</h2>
+        <small style="color:var(--muted)">한숨 원문과 탕비실 글 내용은 제외하고 수치만 반영</small>
       </div>
       <div class="stamp">퇴근 대기</div>
     </div>
@@ -2493,9 +2523,13 @@ body.manager-mode-open{overflow:hidden}
       <div class="row"><span>평균 체념 농도</span><strong id="closeResign">0%</strong></div>
       <div class="row"><span>평균 분노 농도</span><strong id="closeAnger">0%</strong></div>
       <div class="row"><span>대표 한숨 유형</span><strong id="closeType">-</strong></div>
+      <div class="row"><span>탕비실 작성 글</span><strong id="closePantryPosts">0건</strong></div>
+      <div class="row"><span>탕비실 작성 댓글</span><strong id="closePantryComments">0건</strong></div>
+      <div class="row"><span>내 글에 받은 댓글</span><strong id="closeReceivedComments">0건</strong></div>
+      <div class="row"><span>내 글에 받은 공감</span><strong id="closeReceivedReactions">0회</strong></div>
       <div class="row"><span>오늘의 총평</span><strong id="closeReview">-</strong></div>
     </div>
-    <button class="btn dark" style="width:100%;margin-top:16px" id="closeBtn">측정된 한숨 전부 퇴근 처리</button>
+    <button class="btn dark" style="width:100%;margin-top:16px" id="closeBtn">한숨 기록만 퇴근 처리</button>
   </div>
 </section>
 </div>
@@ -2670,30 +2704,114 @@ document.addEventListener('click',e=>{
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 function chart(el,values,labels){el.innerHTML='';values.forEach((v,i)=>{const w=document.createElement('div');w.className='bar-wrap';w.innerHTML=`<div class="bar" style="height:${v}%"></div><span>${labels[i]}</span>`;el.appendChild(w)})}
 
+function getKoreaDateForValue(value){
+  const date=new Date(value);
+  if(Number.isNaN(date.getTime())) return '';
+
+  return new Intl.DateTimeFormat('en-CA',{
+    timeZone:'Asia/Seoul',
+    year:'numeric',
+    month:'2-digit',
+    day:'2-digit'
+  }).format(date);
+}
+
+function getTodayPantryActivity(){
+  const empty={
+    ownPosts:0,
+    ownComments:0,
+    commentsReceived:0,
+    reactionsReceived:0,
+    total:0
+  };
+
+  if(!currentPantryUserId) return empty;
+
+  const today=getKoreaDateString();
+  const isToday=value=>getKoreaDateForValue(value)===today;
+
+  const allOwnPostIds=new Set(
+    pantryPosts
+      .filter(post=>post.user_id===currentPantryUserId)
+      .map(post=>post.id)
+  );
+
+  const ownPosts=pantryPosts.filter(
+    post=>
+      post.user_id===currentPantryUserId &&
+      isToday(post.created_at)
+  ).length;
+
+  const ownComments=pantryComments.filter(
+    comment=>
+      comment.user_id===currentPantryUserId &&
+      isToday(comment.created_at)
+  ).length;
+
+  const commentsReceived=pantryComments.filter(
+    comment=>
+      allOwnPostIds.has(comment.post_id) &&
+      comment.user_id!==currentPantryUserId &&
+      isToday(comment.created_at)
+  ).length;
+
+  const reactionsReceived=pantryReactions.filter(
+    reaction=>
+      allOwnPostIds.has(reaction.post_id) &&
+      reaction.user_id!==currentPantryUserId &&
+      isToday(reaction.created_at)
+  ).length;
+
+  return {
+    ownPosts,
+    ownComments,
+    commentsReceived,
+    reactionsReceived,
+    total:
+      ownPosts+
+      ownComments+
+      commentsReceived+
+      reactionsReceived
+  };
+}
+
 function renderMeasuredStats(){
-  const hasData=stats.total>0;
-  const avgResign=hasData?Math.round(stats.sumResignation/stats.total):0;
-  const avgAnger=hasData?Math.round(stats.sumAnger/stats.total):0;
-  const textRatio=hasData?Math.round(stats.text/stats.total*100):0;
-  const topType=hasData
+  const pantryActivity=getTodayPantryActivity();
+  const hasSighData=stats.total>0;
+  const hasPantryData=pantryActivity.total>0;
+  const hasData=hasSighData||hasPantryData;
+
+  const avgResign=hasSighData
+    ? Math.round(stats.sumResignation/stats.total)
+    : 0;
+
+  const avgAnger=hasSighData
+    ? Math.round(stats.sumAnger/stats.total)
+    : 0;
+
+  const textRatio=hasSighData
+    ? Math.round(stats.text/stats.total*100)
+    : 0;
+
+  const topType=hasSighData
     ? Object.entries(stats.types).sort((a,b)=>b[1]-a[1])[0][0]
     : '-';
 
   $('#todayCount').textContent=stats.total+'회';
-  $('#todayNote').textContent=hasData
+  $('#todayNote').textContent=hasSighData
     ? '현재 기기에서 직접 분석한 기록'
     : '아직 측정 전';
 
   $('#textRatio').textContent=textRatio+'%';
-  $('#textRatioNote').textContent=hasData
+  $('#textRatioNote').textContent=hasSighData
     ? `문장 ${stats.text}건 · 직접 한숨 ${stats.voice}건`
     : '기록이 쌓이면 계산됩니다';
 
-  $('#homeResign').textContent=hasData
+  $('#homeResign').textContent=hasSighData
     ? avgResign+'%'
     : '측정 전';
 
-  $('#resignNote').textContent=hasData
+  $('#resignNote').textContent=hasSighData
     ? '분석 결과 평균'
     : '분석 결과 기준';
 
@@ -2701,6 +2819,25 @@ function renderMeasuredStats(){
   $('#closingSummary').style.display=hasData?'block':'none';
   $('#statsEmpty').style.display=hasData?'none':'block';
   $('#statsContent').style.display=hasData?'block':'none';
+
+  $('#sighRecordMetrics').style.display=hasSighData?'grid':'none';
+  $('#sighRecordDetails').style.display=hasSighData?'grid':'none';
+
+  $('#recordPantryPosts').textContent=pantryActivity.ownPosts+'건';
+  $('#recordPantryComments').textContent=pantryActivity.ownComments+'건';
+  $('#recordReceivedComments').textContent=
+    pantryActivity.commentsReceived+'건';
+  $('#recordReceivedReactions').textContent=
+    pantryActivity.reactionsReceived+'회';
+
+  $('#closePantryPosts').textContent=pantryActivity.ownPosts+'건';
+  $('#closePantryComments').textContent=pantryActivity.ownComments+'건';
+  $('#closeReceivedComments').textContent=
+    pantryActivity.commentsReceived+'건';
+  $('#closeReceivedReactions').textContent=
+    pantryActivity.reactionsReceived+'회';
+
+  $('#closeBtn').style.display=hasSighData?'block':'none';
 
   if(!hasData){
     return;
@@ -2710,18 +2847,24 @@ function renderMeasuredStats(){
   $('#closeTextCount').textContent=stats.text+'건';
   $('#closeVoiceCount').textContent=stats.voice+'건';
   $('#closeSwearCount').textContent=stats.swear+'건';
-  $('#closeResign').textContent=avgResign+'%';
-  $('#closeAnger').textContent=avgAnger+'%';
+  $('#closeResign').textContent=hasSighData?avgResign+'%':'-';
+  $('#closeAnger').textContent=hasSighData?avgAnger+'%':'-';
   $('#closeType').textContent=topType;
 
   $('#closeReview').textContent=
-    avgAnger>=80
+    hasSighData&&avgAnger>=80
       ? '오늘은 말보다 퇴근이 먼저'
-      : avgResign>=80
+      : hasSighData&&avgResign>=80
         ? '마음이 이미 먼저 퇴근함'
-        : avgAnger>=55
-          ? '탕비실 5분 권장'
-          : '어쨌든 오늘도 버팀';
+        : pantryActivity.commentsReceived+
+          pantryActivity.reactionsReceived>=5
+          ? '탕비실 공감으로 버틴 하루'
+          : pantryActivity.ownPosts+
+            pantryActivity.ownComments>0
+            ? '할 말은 탕비실에 두고 퇴근'
+            : hasSighData&&avgAnger>=55
+              ? '탕비실 5분 권장'
+              : '어쨌든 오늘도 버팀';
 
   $('#recordTotal').textContent=stats.total+'회';
   $('#recordText').textContent=stats.text+'회';
@@ -2778,7 +2921,7 @@ function renderMeasuredStats(){
     });
 }
 
-renderMeasuredStats();
+setTimeout(renderMeasuredStats,0);
 
 
 $$('#analysis .tab').forEach(tab=>tab.onclick=()=>{
@@ -3965,6 +4108,8 @@ function renderPantry(){
   $('#pantryLiveText').textContent=participants
     ? `● 참여자 ${participants}명 · 글 ${pantryPosts.length}건 · 댓글 ${pantryComments.length}건`
     : '● 아직 실제 참여자가 없습니다';
+
+  renderMeasuredStats();
 }
 
 function showPantrySetupError(error){
@@ -4438,7 +4583,7 @@ $('#closeBtn').onclick=()=>{
   renderMeasuredStats();
   $('#resultCard').style.display='none';
   $('#sighText').value='';
-  toast('측정된 한숨을 모두 퇴근 처리했습니다.');
+  toast('한숨 기록만 퇴근 처리했습니다. 탕비실 활동 수치는 유지됩니다.');
 };
 </script>
 </body>
