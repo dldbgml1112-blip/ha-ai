@@ -2639,6 +2639,116 @@ document.addEventListener('click',e=>{
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 function chart(el,values,labels){el.innerHTML='';values.forEach((v,i)=>{const w=document.createElement('div');w.className='bar-wrap';w.innerHTML=`<div class="bar" style="height:${v}%"></div><span>${labels[i]}</span>`;el.appendChild(w)})}
 
+function renderMeasuredStats(){
+  const hasData=stats.total>0;
+  const avgResign=hasData?Math.round(stats.sumResignation/stats.total):0;
+  const avgAnger=hasData?Math.round(stats.sumAnger/stats.total):0;
+  const textRatio=hasData?Math.round(stats.text/stats.total*100):0;
+  const topType=hasData
+    ? Object.entries(stats.types).sort((a,b)=>b[1]-a[1])[0][0]
+    : '-';
+
+  $('#todayCount').textContent=stats.total+'회';
+  $('#todayNote').textContent=hasData
+    ? '현재 기기에서 직접 분석한 기록'
+    : '아직 측정 전';
+
+  $('#textRatio').textContent=textRatio+'%';
+  $('#textRatioNote').textContent=hasData
+    ? `문장 ${stats.text}건 · 직접 한숨 ${stats.voice}건`
+    : '기록이 쌓이면 계산됩니다';
+
+  $('#homeResign').textContent=hasData
+    ? avgResign+'%'
+    : '측정 전';
+
+  $('#resignNote').textContent=hasData
+    ? '분석 결과 평균'
+    : '분석 결과 기준';
+
+  $('#closingEmpty').style.display=hasData?'none':'block';
+  $('#closingSummary').style.display=hasData?'block':'none';
+  $('#statsEmpty').style.display=hasData?'none':'block';
+  $('#statsContent').style.display=hasData?'block':'none';
+
+  if(!hasData){
+    return;
+  }
+
+  $('#closeCount').textContent=stats.total+'건';
+  $('#closeTextCount').textContent=stats.text+'건';
+  $('#closeVoiceCount').textContent=stats.voice+'건';
+  $('#closeSwearCount').textContent=stats.swear+'건';
+  $('#closeResign').textContent=avgResign+'%';
+  $('#closeAnger').textContent=avgAnger+'%';
+  $('#closeType').textContent=topType;
+
+  $('#closeReview').textContent=
+    avgAnger>=80
+      ? '오늘은 말보다 퇴근이 먼저'
+      : avgResign>=80
+        ? '마음이 이미 먼저 퇴근함'
+        : avgAnger>=55
+          ? '탕비실 5분 권장'
+          : '어쨌든 오늘도 버팀';
+
+  $('#recordTotal').textContent=stats.total+'회';
+  $('#recordText').textContent=stats.text+'회';
+  $('#recordTextNote').textContent=
+    `전체의 ${textRatio}% · 직접 한숨 ${stats.voice}회`;
+  $('#recordResign').textContent=avgResign+'%';
+  $('#recordAnger').textContent=avgAnger+'%';
+
+  const typeBreakdown=$('#typeBreakdown');
+  typeBreakdown.innerHTML='';
+
+  Object.entries(stats.types)
+    .sort((a,b)=>b[1]-a[1])
+    .forEach(([type,count])=>{
+      const percent=Math.round(count/stats.total*100);
+      const row=document.createElement('div');
+      row.className='score-row';
+      row.innerHTML=
+        '<span></span><div class="track"><div class="fill"></div></div><b></b>';
+
+      row.querySelector('span').textContent=type;
+      row.querySelector('.fill').style.width=percent+'%';
+      row.querySelector('b').textContent=count+'회';
+      typeBreakdown.appendChild(row);
+    });
+
+  const recent=$('#recentRecords');
+  recent.innerHTML='';
+
+  stats.records
+    .slice(-6)
+    .reverse()
+    .forEach(record=>{
+      const box=document.createElement('div');
+      box.className='translation-box';
+
+      const title=document.createElement('small');
+      title.textContent=
+        `${record.time} · ${record.source==='voice'?'직접 한숨':'문장 입력'}`;
+
+      const type=document.createElement('p');
+      type.textContent=record.type;
+
+      const detail=document.createElement('div');
+      detail.style.cssText=
+        'margin-top:6px;color:var(--muted);font-size:12px;line-height:1.5';
+
+      detail.textContent=
+        `체념 ${record.resignation}% · 분노 ${record.anger}%`+
+        `${record.swear?' · 거친 표현 포함':''}`;
+
+      box.append(title,type,detail);
+      recent.appendChild(box);
+    });
+}
+
+renderMeasuredStats();
+
 
 $$('#analysis .tab').forEach(tab=>tab.onclick=()=>{
   $$('#analysis .tab').forEach(item=>item.classList.remove('active'));
