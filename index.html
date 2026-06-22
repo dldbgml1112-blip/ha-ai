@@ -2402,14 +2402,14 @@ body.manager-mode-open{overflow:hidden}
     <div>
       <span class="eyebrow">MY SURVIVAL RECORDS</span>
       <h2 style="margin:12px 0 0">내 생존 기록</h2>
-      <p>한숨 원문과 탕비실 글 내용은 표시하지 않고, 분석 결과와 본인 활동 수치만 집계합니다.</p>
+      <p>회사어 정화 횟수, 한숨 분석 결과, 탕비실 활동을 집계합니다. 입력 원문과 글 내용은 기록 화면에 표시하지 않습니다.</p>
     </div>
   </div>
 
   <div class="statement empty-state" id="statsEmpty">
     <div class="empty-icon">📭</div>
     <h3>아직 쌓인 기록이 없습니다</h3>
-    <p>한숨을 분석하거나 탕비실에서 글·댓글을 남기면 내용 없이 활동 수치만 이곳에 표시됩니다.</p>
+    <p>회사어를 정화하거나 한숨을 분석하거나 탕비실에서 활동하면 내용 없이 수치만 이곳에 표시됩니다.</p>
     <button class="btn dark" data-go-analysis>첫 한숨 분석하기</button>
   </div>
 
@@ -2461,6 +2461,26 @@ body.manager-mode-open{overflow:hidden}
 
     <div class="section-head" style="margin:28px 0 14px">
       <div>
+        <h2>오늘의 회사어 정화</h2>
+        <p>성공적으로 생성된 결과만 집계하며 입력한 원문은 기록하지 않습니다.</p>
+      </div>
+    </div>
+
+    <div class="grid g2" id="purifierRecordMetrics">
+      <div class="card metric">
+        <div class="label">회사어 정화</div>
+        <div class="value" id="recordPurifierCount">0회</div>
+        <div class="note">AI 결과 생성 성공 기준</div>
+      </div>
+      <div class="card metric">
+        <div class="label">생성한 업무 문장</div>
+        <div class="value" id="recordPurifierOutputs">0개</div>
+        <div class="note">한 번에 4가지 톤 제공</div>
+      </div>
+    </div>
+
+    <div class="section-head" style="margin:28px 0 14px">
+      <div>
         <h2>오늘의 탕비실 활동</h2>
         <p>게시글과 댓글의 실제 내용은 제외하고 현재 익명 계정의 수치만 표시합니다.</p>
       </div>
@@ -2496,14 +2516,14 @@ body.manager-mode-open{overflow:hidden}
     <div>
       <span class="eyebrow">END OF DAY SETTLEMENT</span>
       <h2 style="margin:12px 0 0">오늘의 퇴근 정산</h2>
-      <p>한숨 분석과 탕비실 활동을 내용 노출 없이 수치로만 마감합니다.</p>
+      <p>회사어 정화, 한숨 분석, 탕비실 활동을 내용 노출 없이 수치로만 마감합니다.</p>
     </div>
   </div>
 
   <div class="statement empty-state" id="closingEmpty">
     <div class="empty-icon">🫥</div>
     <h3>아직 정산할 활동이 없습니다</h3>
-    <p>한숨을 분석하거나 탕비실에서 활동하면 입력 내용 없이 집계 수치만 정산서에 표시됩니다.</p>
+    <p>회사어를 정화하거나 한숨을 분석하거나 탕비실에서 활동하면 입력 내용 없이 집계 수치만 정산서에 표시됩니다.</p>
     <button class="btn dark" data-go-analysis>한숨 먼저 분석하기</button>
   </div>
 
@@ -2511,7 +2531,7 @@ body.manager-mode-open{overflow:hidden}
     <div class="statement-head">
       <div>
         <h2 style="margin:0">오늘의 생존 정산서</h2>
-        <small style="color:var(--muted)">한숨 원문과 탕비실 글 내용은 제외하고 수치만 반영</small>
+        <small style="color:var(--muted)">회사어 원문·한숨 원문·탕비실 글 내용은 제외하고 수치만 반영</small>
       </div>
       <div class="stamp">퇴근 대기</div>
     </div>
@@ -2523,13 +2543,15 @@ body.manager-mode-open{overflow:hidden}
       <div class="row"><span>평균 체념 농도</span><strong id="closeResign">0%</strong></div>
       <div class="row"><span>평균 분노 농도</span><strong id="closeAnger">0%</strong></div>
       <div class="row"><span>대표 한숨 유형</span><strong id="closeType">-</strong></div>
+      <div class="row"><span>회사어 정화</span><strong id="closePurifierCount">0회</strong></div>
+      <div class="row"><span>생성한 업무 문장</span><strong id="closePurifierOutputs">0개</strong></div>
       <div class="row"><span>탕비실 작성 글</span><strong id="closePantryPosts">0건</strong></div>
       <div class="row"><span>탕비실 작성 댓글</span><strong id="closePantryComments">0건</strong></div>
       <div class="row"><span>내 글에 받은 댓글</span><strong id="closeReceivedComments">0건</strong></div>
       <div class="row"><span>내 글에 받은 공감</span><strong id="closeReceivedReactions">0회</strong></div>
       <div class="row"><span>오늘의 총평</span><strong id="closeReview">-</strong></div>
     </div>
-    <button class="btn dark" style="width:100%;margin-top:16px" id="closeBtn">한숨 기록만 퇴근 처리</button>
+    <button class="btn dark" style="width:100%;margin-top:16px" id="closeBtn">한숨·정화 기록 퇴근 처리</button>
   </div>
 </section>
 </div>
@@ -2673,6 +2695,7 @@ let stats={
   total:0,
   text:0,
   voice:0,
+  purifier:0,
   swear:0,
   sumResignation:0,
   sumAnger:0,
@@ -2778,8 +2801,9 @@ function getTodayPantryActivity(){
 function renderMeasuredStats(){
   const pantryActivity=getTodayPantryActivity();
   const hasSighData=stats.total>0;
+  const hasPurifierData=stats.purifier>0;
   const hasPantryData=pantryActivity.total>0;
-  const hasData=hasSighData||hasPantryData;
+  const hasData=hasSighData||hasPurifierData||hasPantryData;
 
   const avgResign=hasSighData
     ? Math.round(stats.sumResignation/stats.total)
@@ -2823,6 +2847,11 @@ function renderMeasuredStats(){
   $('#sighRecordMetrics').style.display=hasSighData?'grid':'none';
   $('#sighRecordDetails').style.display=hasSighData?'grid':'none';
 
+  $('#recordPurifierCount').textContent=stats.purifier+'회';
+  $('#recordPurifierOutputs').textContent=(stats.purifier*4)+'개';
+  $('#closePurifierCount').textContent=stats.purifier+'회';
+  $('#closePurifierOutputs').textContent=(stats.purifier*4)+'개';
+
   $('#recordPantryPosts').textContent=pantryActivity.ownPosts+'건';
   $('#recordPantryComments').textContent=pantryActivity.ownComments+'건';
   $('#recordReceivedComments').textContent=
@@ -2862,9 +2891,13 @@ function renderMeasuredStats(){
           : pantryActivity.ownPosts+
             pantryActivity.ownComments>0
             ? '할 말은 탕비실에 두고 퇴근'
-            : hasSighData&&avgAnger>=55
-              ? '탕비실 5분 권장'
-              : '어쨌든 오늘도 버팀';
+            : stats.purifier>=3
+              ? '거친 말은 정화기에 두고 퇴근'
+              : hasSighData&&avgAnger>=55
+                ? '탕비실 5분 권장'
+                : stats.purifier>0
+                  ? '할 말은 정리했고 이제 퇴근'
+                  : '어쨌든 오늘도 버팀';
 
   $('#recordTotal').textContent=stats.total+'회';
   $('#recordText').textContent=stats.text+'회';
@@ -3043,6 +3076,8 @@ async function purifyOfficeMessage(){
       text
     });
     renderPurifierResult(analysis);
+    stats.purifier+=1;
+    renderMeasuredStats();
     toast('실제로 보낼 수 있는 업무 문장으로 정리했습니다.');
   }catch(error){
     console.error(error);
@@ -4579,11 +4614,11 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 $('#closeBtn').onclick=()=>{
-  stats={total:0,text:0,voice:0,swear:0,sumResignation:0,sumAnger:0,types:{},records:[]};
+  stats={total:0,text:0,voice:0,purifier:0,swear:0,sumResignation:0,sumAnger:0,types:{},records:[]};
   renderMeasuredStats();
   $('#resultCard').style.display='none';
   $('#sighText').value='';
-  toast('한숨 기록만 퇴근 처리했습니다. 탕비실 활동 수치는 유지됩니다.');
+  toast('한숨·정화 기록을 퇴근 처리했습니다. 탕비실 활동 수치는 유지됩니다.');
 };
 </script>
 </body>
