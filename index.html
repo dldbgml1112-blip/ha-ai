@@ -98,6 +98,20 @@ textarea:focus{border-color:var(--lime);box-shadow:0 0 0 4px rgba(217,255,89,.10
 .chart{height:200px;display:flex;align-items:end;gap:12px;padding-top:15px}.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:end;gap:8px;height:100%}.bar{width:100%;max-width:42px;background:linear-gradient(var(--navy2),var(--navy));border-radius:10px 10px 4px 4px}.bar-wrap span{font-size:11px;color:var(--muted)}
 .empty-state{text-align:center;padding:48px 24px}.empty-state .empty-icon{font-size:52px;margin-bottom:12px}.empty-state h3{font-size:23px;margin:0 0 8px}.empty-state p{color:var(--muted);line-height:1.65;margin:0 auto 20px;max-width:430px}.statement{background:#fff;border:1px solid var(--line);border-radius:24px;padding:27px}.statement-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px dashed #d5dae2;padding-bottom:17px}.stamp{border:3px solid #dc4b5b;color:#dc4b5b;padding:8px 11px;border-radius:8px;font-weight:1000;transform:rotate(-7deg)}.statement-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:17px}.row{display:flex;justify-content:space-between;gap:12px;background:#f6f8fa;border-radius:12px;padding:13px}.row span{font-size:13px;color:var(--muted)}.row strong{font-size:14px}
 .toast{position:fixed;right:22px;bottom:22px;background:var(--navy);color:#fff;padding:13px 15px;border-radius:13px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;z-index:30}.toast.show{opacity:1;transform:none}
+
+nav button[data-view="pantry"]{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pantry-unread-badge{display:none;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--red);color:#fff;font-size:11px;font-weight:1000;line-height:20px;text-align:center;box-shadow:0 4px 12px rgba(255,101,109,.28)}
+.pantry-unread-badge.show{display:inline-block}
+.mobile-nav button[data-view="pantry"]{position:relative}
+.mobile-nav .pantry-unread-badge{position:absolute;top:3px;right:8px;min-width:18px;height:18px;padding:0 5px;line-height:18px;font-size:10px}
+.my-pantry-nickname{margin:10px 0 8px;padding:9px 11px;border-radius:11px;background:#f2f5f8;border:1px solid var(--line);color:#4e5968;font-size:12px;font-weight:850}
+.comment-alert{position:fixed;right:22px;bottom:22px;width:min(360px,calc(100vw - 32px));background:#fff;color:var(--ink);border:1px solid var(--line);border-left:5px solid var(--lime);border-radius:16px;padding:14px 44px 14px 15px;box-shadow:0 18px 46px rgba(18,28,49,.24);opacity:0;transform:translateY(16px);pointer-events:none;transition:.22s;z-index:60;cursor:pointer}
+.comment-alert.show{opacity:1;transform:none;pointer-events:auto}
+.comment-alert strong{display:block;font-size:14px;margin-bottom:5px}
+.comment-alert p{margin:0;color:#596273;font-size:12px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.comment-alert .comment-alert-close{position:absolute;right:11px;top:11px;border:0;background:#f1f4f7;color:#697586;width:25px;height:25px;border-radius:999px;font-weight:1000;cursor:pointer}
+.post.comment-focus{outline:3px solid rgba(217,255,89,.75);box-shadow:0 0 0 7px rgba(217,255,89,.16);transition:.2s}
+@media(max-width:760px){.comment-alert{right:12px;bottom:88px;width:calc(100vw - 24px)}}
 @media(max-width:1000px){.hero-grid,.analysis-layout,.pantry-layout{grid-template-columns:1fr}.g4{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.app{display:block}aside{display:none}header{height:64px;padding:0 14px}.wrap{padding:15px 12px 80px}.hero{padding:27px 21px}.hero h1{font-size:45px}.g4,.g2,.statement-grid{grid-template-columns:1fr}.head-actions .btn:first-child{display:none}.score-row{grid-template-columns:90px 1fr 42px}}
 
@@ -1982,7 +1996,7 @@ body.manager-mode-open{overflow:hidden}
   <nav>
     <button class="active" data-view="home">메인</button>
     <button data-view="purifier">회사어 정화기</button>
-    <button data-view="pantry">익명 탕비실</button>
+    <button data-view="pantry">익명 탕비실<span class="pantry-unread-badge" aria-label="새 댓글 수">0</span></button>
     <button data-view="analysis">한숨 분석</button>
     <button data-view="stats">내 기록</button>
     <button data-view="closing">퇴근 정산</button>
@@ -2330,6 +2344,7 @@ body.manager-mode-open{overflow:hidden}
         <span class="eyebrow">DROP IT HERE</span>
         <h3>탕비실에 한마디</h3>
         <p class="compose-guide">회사명과 실명은 빼고 오늘 있었던 일만 두고 가세요.</p>
+        <div class="my-pantry-nickname" id="myPantryNickname">내 익명 닉네임을 준비하는 중…</div>
         <textarea id="pantryText" maxlength="120" placeholder="예: 기준은 계속 바뀌는데 마감은 그대로래요."></textarea>
         <div class="quick">
           <button>와 그건 좀…</button>
@@ -2490,7 +2505,7 @@ body.manager-mode-open{overflow:hidden}
 <div class="mobile-nav" aria-label="모바일 메뉴">
   <button class="active" data-view="home"><span class="ico">⌂</span>메인</button>
   <button data-view="purifier"><span class="ico">🧼</span>정화기</button>
-  <button data-view="pantry"><span class="ico">☕</span>탕비실</button>
+  <button data-view="pantry"><span class="ico">☕</span>탕비실<span class="pantry-unread-badge" aria-label="새 댓글 수">0</span></button>
   <button data-view="analysis"><span class="ico">💨</span>한숨</button>
   <button data-view="stats"><span class="ico">▥</span>기록</button>
 </div>
@@ -2611,6 +2626,11 @@ body.manager-mode-open{overflow:hidden}
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="comment-alert" id="commentAlert" role="status" aria-live="polite" tabindex="0">
+  <button type="button" class="comment-alert-close" aria-label="알림 닫기">×</button>
+  <strong id="commentAlertTitle">내 글에 새 댓글</strong>
+  <p id="commentAlertBody"></p>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -2629,6 +2649,7 @@ let stats={
 function showView(id){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   $$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+  if(id==='pantry') markPantryCommentsRead();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 $$('[data-view]').forEach(b=>b.onclick=()=>showView(b.dataset.view));
@@ -3521,6 +3542,9 @@ let pantryReactions=[];
 let pantryComments=[];
 let currentPantryUserId=null;
 let pantryLoading=false;
+let pantryRealtimeChannel=null;
+let unreadPantryComments=0;
+let commentAlertTimer=null;
 
 function setPantryConnection(){
   // 공개 화면에는 내부 데이터 연결 상태를 노출하지 않습니다.
@@ -3536,18 +3560,160 @@ function formatPantryTime(value){
   return date.toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'});
 }
 
+
+const PANTRY_NICKNAME_PREFIXES=[
+  '종이컵하나','퇴근오분전','커피식는중','회의실유령','칼퇴기원',
+  '점심만기다려','읽씹희망','엑셀도망자','슬랙잠수중','보고서미아',
+  '탕비실단골','야근탈출','메일안봄','마감밀림','휴가꿈나무',
+  '월급루팡','퇴사보류','복사붙여넣기','점심메뉴고민','회의끝내줘',
+  '주말기다림','커피두잔째','퇴근버튼','일정재협의','메신저잠수',
+  '회의탈주범','인수인계중','마감직전','점심수호대','업무범위확인'
+];
+
+const PANTRY_NICKNAME_SUFFIXES=[
+  '익명','직장인','생존자','한숨러','도망자',
+  '관찰자','대기자','퇴근러','잠수부','커피인간',
+  '메신저유령','보고서노예','마감전사','회의난민','점심수호자',
+  '칼퇴연구원','복붙장인','눈치게임러','탕비실주민','퇴사꿈나무',
+  '일정조율자','범위확인러','휴가대기자','메일미확인','오늘도버팀',
+  '회의종료희망','업무분리단','정시퇴근파','점심진심러','퇴근준비중'
+];
+
+function hashPantryUserId(userId){
+  let hash=2166136261;
+  const value=String(userId||'anonymous');
+  for(let i=0;i<value.length;i+=1){
+    hash^=value.charCodeAt(i);
+    hash=Math.imul(hash,16777619);
+  }
+  return hash>>>0;
+}
+
+function nicknameForUser(userId){
+  const hash=hashPantryUserId(userId);
+  const prefix=PANTRY_NICKNAME_PREFIXES[hash%PANTRY_NICKNAME_PREFIXES.length];
+  const suffix=PANTRY_NICKNAME_SUFFIXES[
+    Math.floor(hash/PANTRY_NICKNAME_PREFIXES.length)%PANTRY_NICKNAME_SUFFIXES.length
+  ];
+  return `${prefix}_${suffix}`;
+}
+
+function updateMyPantryNickname(){
+  const box=$('#myPantryNickname');
+  if(!box||!currentPantryUserId) return;
+  box.textContent=`내 익명 닉네임 · ${nicknameForUser(currentPantryUserId)}`;
+}
+
+function updatePantryUnreadBadge(){
+  $$('.pantry-unread-badge').forEach(badge=>{
+    badge.textContent=unreadPantryComments>99?'99+':String(unreadPantryComments);
+    badge.classList.toggle('show',unreadPantryComments>0);
+  });
+}
+
+function markPantryCommentsRead(){
+  unreadPantryComments=0;
+  updatePantryUnreadBadge();
+}
+
+function hideCommentAlert(){
+  const alert=$('#commentAlert');
+  if(!alert) return;
+  alert.classList.remove('show');
+  if(commentAlertTimer){
+    clearTimeout(commentAlertTimer);
+    commentAlertTimer=null;
+  }
+}
+
+function openPantryPost(postId){
+  showView('pantry');
+  hideCommentAlert();
+  setTimeout(()=>{
+    const post=document.querySelector(`[data-post-id="${postId}"]`);
+    if(!post) return;
+    post.scrollIntoView({behavior:'smooth',block:'center'});
+    post.classList.add('comment-focus');
+    setTimeout(()=>post.classList.remove('comment-focus'),1800);
+  },120);
+}
+
+function showCommentAlert(comment,post){
+  const alert=$('#commentAlert');
+  if(!alert) return;
+  const author=nicknameForUser(comment.user_id);
+  $('#commentAlertTitle').textContent='내 글에 새 댓글이 달렸습니다';
+  $('#commentAlertBody').textContent=`${author} · ${comment.content}`;
+  alert.dataset.postId=post.id;
+  alert.classList.add('show');
+  if(commentAlertTimer) clearTimeout(commentAlertTimer);
+  commentAlertTimer=setTimeout(hideCommentAlert,6500);
+}
+
+async function handleRealtimeCommentInsert(comment){
+  if(!comment?.id) return;
+  if(!pantryComments.some(item=>item.id===comment.id)){
+    pantryComments.push(comment);
+    pantryComments.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    renderPantry();
+  }
+
+  if(!currentPantryUserId||comment.user_id===currentPantryUserId) return;
+
+  let post=pantryPosts.find(item=>item.id===comment.post_id);
+  if(!post){
+    const {data,error}=await supabaseClient
+      .from('pantry_posts')
+      .select('id,user_id,nickname,content,created_at')
+      .eq('id',comment.post_id)
+      .maybeSingle();
+    if(!error&&data){
+      post=data;
+      pantryPosts.unshift(data);
+      renderPantry();
+    }
+  }
+
+  if(post?.user_id===currentPantryUserId){
+    unreadPantryComments+=1;
+    updatePantryUnreadBadge();
+    showCommentAlert(comment,post);
+  }
+}
+
+async function subscribePantryRealtime(){
+  await ensurePantrySession();
+  if(pantryRealtimeChannel) return;
+
+  pantryRealtimeChannel=supabaseClient
+    .channel(`pantry-comments-${currentPantryUserId}`)
+    .on(
+      'postgres_changes',
+      {event:'INSERT',schema:'public',table:'pantry_comments'},
+      payload=>handleRealtimeCommentInsert(payload.new)
+    )
+    .on(
+      'postgres_changes',
+      {event:'DELETE',schema:'public',table:'pantry_comments'},
+      ()=>loadPantry({silent:true})
+    )
+    .subscribe();
+}
+
 async function ensurePantrySession(){
   const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
   if(sessionError) throw sessionError;
 
   if(sessionData.session){
     currentPantryUserId=sessionData.session.user.id;
+    updateMyPantryNickname();
     return currentPantryUserId;
   }
 
   const {data,error}=await supabaseClient.auth.signInAnonymously();
   if(error) throw error;
   currentPantryUserId=data.user.id;
+  updateMyPantryNickname();
   return currentPantryUserId;
 }
 
@@ -3566,6 +3732,7 @@ function renderPantry(){
       const article=document.createElement('article');
       article.className='post';
       article.dataset.postId=post.id;
+      article.id=`pantry-post-${post.id}`;
 
       const avatar=document.createElement('div');
       avatar.className='avatar';
@@ -3576,7 +3743,7 @@ function renderPantry(){
       head.className='post-head';
 
       const name=document.createElement('strong');
-      name.textContent=post.nickname||'종이컵하나_익명';
+      name.textContent=nicknameForUser(post.user_id);
 
       const headActions=document.createElement('div');
       headActions.className='post-head-actions';
@@ -3647,7 +3814,7 @@ function renderPantry(){
           meta.className='comment-meta';
 
           const author=document.createElement('strong');
-          author.textContent='익명 댓글';
+          author.textContent=`${nicknameForUser(comment.user_id)}${comment.user_id===post.user_id?' · 글쓴이':''}`;
 
           const commentTime=document.createElement('span');
           commentTime.textContent=formatPantryTime(comment.created_at);
@@ -3680,7 +3847,7 @@ function renderPantry(){
       commentInput.type='text';
       commentInput.className='comment-input';
       commentInput.maxLength=200;
-      commentInput.placeholder='익명으로 댓글 달기';
+      commentInput.placeholder=`${nicknameForUser(currentPantryUserId)}으로 댓글 달기`;
 
       const commentSubmit=document.createElement('button');
       commentSubmit.type='button';
@@ -3978,7 +4145,7 @@ $('#feed').addEventListener('click',async event=>{
 
       if(error) throw error;
       input.value='';
-      toast('익명 댓글을 남겼습니다.');
+      toast(`${nicknameForUser(currentPantryUserId)}으로 댓글을 남겼습니다.`);
       await loadPantry({silent:true});
     }catch(error){
       console.error(error);
@@ -4062,13 +4229,13 @@ $('#postBtn').onclick=async()=>{
       .from('pantry_posts')
       .insert({
         user_id:currentPantryUserId,
-        nickname:'종이컵하나_익명',
+        nickname:nicknameForUser(currentPantryUserId),
         content:text
       });
     if(error) throw error;
 
     $('#pantryText').value='';
-    toast('익명 글을 올렸습니다.');
+    toast(`${nicknameForUser(currentPantryUserId)}으로 글을 올렸습니다.`);
     await loadPantry({silent:true});
   }catch(error){
     console.error(error);
@@ -4079,7 +4246,24 @@ $('#postBtn').onclick=async()=>{
   }
 };
 
+$('#commentAlert').addEventListener('click',event=>{
+  if(event.target.closest('.comment-alert-close')){
+    hideCommentAlert();
+    return;
+  }
+  const postId=$('#commentAlert').dataset.postId;
+  if(postId) openPantryPost(postId);
+});
+
+$('#commentAlert').addEventListener('keydown',event=>{
+  if(event.key!=='Enter'&&event.key!==' ') return;
+  event.preventDefault();
+  const postId=$('#commentAlert').dataset.postId;
+  if(postId) openPantryPost(postId);
+});
+
 loadPantry();
+subscribePantryRealtime().catch(error=>console.error('실시간 댓글 연결 실패:',error));
 loadHourlySighs();
 setInterval(()=>{
   if(document.visibilityState==='visible'){
